@@ -119,19 +119,39 @@ app.post('/api/scan', upload.single('image'), async (req, res) => {
       },
     };
 
-    const prompt = `Analyze this Pokemon trading card image and extract the following fields. Return ONLY a JSON object with these keys:
-    - name: The Pokemon's name
-    - card_number: The card number (e.g. "006/165")
-    - set_name: The set/expansion name
-    - year: The year printed on the card
-    - rarity: The rarity level (Common, Uncommon, Rare, Holo Rare, Ultra Rare, Full Art, Alt Art, Secret Rare, etc.)
-    - energy_type: The energy/type (Fire, Water, Grass, Lightning, Psychic, Fighting, Darkness, Metal, Dragon, Fairy, Colorless)
-    - hp: The HP value as a number
+    const prompt = `You are a Pokemon TCG card identification expert. Analyze this Pokemon trading card image and extract ALL of the following fields. Return ONLY a valid JSON object.
+
+    CARD IDENTITY:
+    - name: The Pokemon or card name exactly as printed (e.g. "Charizard", "Boss's Orders")
+    - card_number: The collector number as printed (e.g. "006/165", "TG30/TG30")
+    - set_name: The set/expansion name (e.g. "Obsidian Flames", "Scarlet & Violet 151")
+    - year: The year printed on the card (bottom of card, e.g. "2024")
+    - card_category: "Pokemon", "Trainer", or "Energy"
+    - trainer_subtype: If Trainer card: "Item", "Supporter", "Stadium", or "Tool". Otherwise empty string.
+    - energy_subtype: If Energy card: "Basic" or "Special". Otherwise empty string.
+
+    RARITY & VARIANT:
+    - rarity: Exact rarity (Common, Uncommon, Rare, Holo Rare, Double Rare, Ultra Rare, Full Art, Alt Art, Secret Rare, Illustration Rare, Special Illustration Rare, Hyper Rare, Gold, Trainer Gallery, Amazing Rare, Radiant Rare, Shiny Rare, ACE SPEC Rare)
+    - finish: "Holo", "Reverse Holo", "Non-Holo", "Full Art", or "Cosmos Holo"
     - parallel: Any parallel/variant info (e.g. "Reverse Holo", "Cosmos Holo") or empty string
-    - language: The language of the card
+    - edition: "1st Edition" if 1st Ed stamp visible, "Shadowless" if no shadow on card border, otherwise "Unlimited"
     - is_first_edition: true/false
 
-    If you cannot determine a field, use an empty string. Return valid JSON only.`;
+    POKEMON ATTRIBUTES (if card_category is Pokemon):
+    - energy_type: Primary energy type (Fire, Water, Grass, Lightning, Psychic, Fighting, Darkness, Metal, Dragon, Fairy, Colorless)
+    - hp: HP value as a number (e.g. 330)
+    - stage: "Basic", "Stage 1", "Stage 2", "BREAK", "Level X", "Mega EX", "GX", "V", "VMAX", "VSTAR", "ex", or "Radiant"
+    - weakness_type: Weakness energy type or empty string
+    - resistance_type: Resistance energy type or empty string
+    - retreat_cost: Number of retreat cost energy (0-5)
+    - evolves_from: Pokemon it evolves from if shown, or empty string
+
+    OTHER DETAILS:
+    - illustrator: Artist name from bottom of card
+    - regulation_mark: The regulation mark letter (D, E, F, G, H, I) from bottom-right of card, or empty string
+    - language: Card language (English, Japanese, Korean, etc.)
+
+    If you cannot determine a field, use an empty string for strings, null for numbers, false for booleans. Return valid JSON only, no markdown.`;
 
     const result = await model.generateContent([prompt, imagePart]);
     const text = result.response.text();

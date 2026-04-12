@@ -12,7 +12,10 @@ const navItems = [
 export default function Sidebar() {
   return (
     <aside className="sidebar">
-      <div className="sidebar-logo">Thick Pulls TCG</div>
+      <div className="sidebar-logo">
+        <img src="/pokeball.png" alt="" style={{ width: 24, height: 24 }} />
+        Thick Pulls TCG
+      </div>
       <nav className="sidebar-nav">
         {navItems.map(({ to, label }) => (
           <NavLink

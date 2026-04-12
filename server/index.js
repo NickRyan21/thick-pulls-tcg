@@ -34,6 +34,62 @@ app.get('/healthz', (req, res) => {
   res.json({ status: 'ok' });
 });
 
+// ─── Auth ─────────────────────────────────────────────────────────
+
+const ACCESS_KEY = process.env.ACCESS_KEY || 'CoziestMoss';
+
+app.post('/api/auth/signup', async (req, res) => {
+  const { access_key, username, password, email } = req.body;
+
+  if (access_key !== ACCESS_KEY) {
+    return res.status(403).json({ error: 'Invalid access key' });
+  }
+  if (!username || !password) {
+    return res.status(400).json({ error: 'Username and password required' });
+  }
+
+  // Check if username taken
+  const { data: existing } = await supabase
+    .from('users')
+    .select('id')
+    .eq('username', username)
+    .single();
+  if (existing) {
+    return res.status(409).json({ error: 'Username already taken' });
+  }
+
+  const { data, error } = await supabase
+    .from('users')
+    .insert({ username, password_hash: password, email: email || null })
+    .select('id, username, email')
+    .single();
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ user: data });
+});
+
+app.post('/api/auth/login', async (req, res) => {
+  const { username, password } = req.body;
+  if (!username || !password) {
+    return res.status(400).json({ error: 'Username and password required' });
+  }
+
+  const { data, error } = await supabase
+    .from('users')
+    .select('id, username, email, password_hash')
+    .eq('username', username)
+    .single();
+
+  if (!data || error) {
+    return res.status(401).json({ error: 'Invalid username or password' });
+  }
+  if (data.password_hash !== password) {
+    return res.status(401).json({ error: 'Invalid username or password' });
+  }
+
+  const { password_hash, ...user } = data;
+  res.json({ user });
+});
+
 // ─── Cards ────────────────────────────────────────────────────────
 
 // Get all cards

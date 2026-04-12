@@ -9,7 +9,7 @@ const navItems = [
   { to: '/labels', label: 'Labels' },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({ onLogout, user }) {
   return (
     <aside className="sidebar">
       <div className="sidebar-logo">
@@ -29,7 +29,9 @@ export default function Sidebar() {
         ))}
       </nav>
       <div className="sidebar-bottom">
+        {user && <span style={{ fontSize: 12, color: '#58a6ff', padding: '0 0 4px' }}>{user.username}</span>}
         <NavLink to="/settings" className="sidebar-link">My Account</NavLink>
+        <a className="sidebar-link logout" onClick={onLogout} style={{ cursor: 'pointer', color: '#f85149' }}>Logout</a>
       </div>
     </aside>
   );

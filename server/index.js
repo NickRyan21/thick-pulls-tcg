@@ -8,7 +8,13 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: [
+    'http://localhost:5173',
+    'https://client-thick-rips.vercel.app',
+    /\.vercel\.app$/,
+  ],
+}));
 app.use(express.json());
 
 // Supabase
@@ -22,7 +28,10 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 // Health check
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', service: 'thick-pulls-tcg' });
+  res.json({ status: 'ok', service: 'thick-rips-tcg' });
+});
+app.get('/healthz', (req, res) => {
+  res.json({ status: 'ok' });
 });
 
 // ─── Cards ────────────────────────────────────────────────────────
@@ -223,5 +232,5 @@ app.delete('/api/labels/:id', async (req, res) => {
 // ─── Start ────────────────────────────────────────────────────────
 
 app.listen(PORT, () => {
-  console.log(`Thick Pulls TCG server running on port ${PORT}`);
+  console.log(`Thick Rips TCG server running on port ${PORT}`);
 });

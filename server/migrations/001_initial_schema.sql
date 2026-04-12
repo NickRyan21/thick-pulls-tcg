@@ -1,4 +1,4 @@
--- Thick Pulls TCG - Initial Schema
+-- Thick Rips TCG - Initial Schema
 
 -- Series (supports nesting: parent → sub-series)
 CREATE TABLE IF NOT EXISTS series (

@@ -14,7 +14,7 @@ export default function Sidebar() {
     <aside className="sidebar">
       <div className="sidebar-logo">
         <img src="/pokeball.png" alt="" style={{ width: 24, height: 24 }} />
-        Thick Pulls TCG
+        Thick Rips TCG
       </div>
       <nav className="sidebar-nav">
         {navItems.map(({ to, label }) => (

@@ -18,7 +18,7 @@ const TRAINER_SUBTYPES = ['Item', 'Supporter', 'Stadium', 'Tool'];
 const ENERGY_SUBTYPES = ['Basic', 'Special'];
 const LANGUAGES = ['English', 'Japanese', 'Korean', 'Chinese Traditional', 'Chinese Simplified', 'French', 'German', 'Spanish', 'Italian', 'Portuguese', 'Polish', 'Dutch', 'Thai', 'Indonesian'];
 
-export default function AddCardModal({ onClose, onSave }) {
+export default function AddCardModal({ onClose, onSave, user }) {
   const [frontImage, setFrontImage] = useState(null);
   const [backImage, setBackImage] = useState(null);
   const [scanning, setScanning] = useState(false);
@@ -147,6 +147,7 @@ export default function AddCardModal({ onClose, onSave }) {
         retreat_cost: form.retreat_cost ? parseInt(form.retreat_cost) : null,
         purchase_price: form.purchase_price ? parseFloat(form.purchase_price) : null,
         character_name: form.character_name || form.name,
+        user_id: user?.id || null,
       };
 
       const res = await fetch(`${API_URL}/api/cards`, {

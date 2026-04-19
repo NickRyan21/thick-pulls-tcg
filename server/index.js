@@ -61,7 +61,7 @@ app.post('/api/auth/signup', async (req, res) => {
   const { data, error } = await supabase
     .from('users')
     .insert({ username, password_hash: password, email: email || null })
-    .select('id, username, email')
+    .select('id, username, email, first_name, last_name')
     .single();
   if (error) return res.status(500).json({ error: error.message });
   res.json({ user: data });
@@ -75,7 +75,7 @@ app.post('/api/auth/login', async (req, res) => {
 
   const { data, error } = await supabase
     .from('users')
-    .select('id, username, email, password_hash')
+    .select('id, username, email, first_name, last_name, ebay_default_starting_bid, ebay_username, password_hash')
     .eq('username', username)
     .single();
 
@@ -90,16 +90,54 @@ app.post('/api/auth/login', async (req, res) => {
   res.json({ user });
 });
 
+app.put('/api/auth/profile/:id', async (req, res) => {
+  const { username, email, first_name, last_name, password, ebay_default_starting_bid } = req.body;
+  const update = { username, email, first_name, last_name };
+  if (password) update.password_hash = password;
+  if (ebay_default_starting_bid !== undefined) update.ebay_default_starting_bid = ebay_default_starting_bid;
+
+  const { data, error } = await supabase
+    .from('users')
+    .update(update)
+    .eq('id', req.params.id)
+    .select('id, username, email, first_name, last_name, ebay_default_starting_bid, ebay_username')
+    .single();
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ user: data });
+});
+
 // ─── Cards ────────────────────────────────────────────────────────
 
-// Get all cards
+// Get all cards (optionally filtered by user_id)
 app.get('/api/cards', async (req, res) => {
-  const { data, error } = await supabase
-    .from('cards')
-    .select('*')
-    .order('created_at', { ascending: false });
+  const { user_id } = req.query;
+  let query = supabase.from('cards').select('*').order('created_at', { ascending: false });
+  if (user_id) query = query.eq('user_id', user_id);
+  const { data, error } = await query;
   if (error) return res.status(500).json({ error: error.message });
   res.json(data);
+});
+
+// Dashboard stats for a user
+app.get('/api/stats', async (req, res) => {
+  const { user_id } = req.query;
+  let query = supabase.from('cards').select('ebay_status, ebay_sold_price, ebay_sold_at, ebay_price');
+  if (user_id) query = query.eq('user_id', user_id);
+  const { data, error } = await query;
+  if (error) return res.status(500).json({ error: error.message });
+
+  const listed = data.filter(c => c.ebay_status === 'active').length;
+  const sold = data.filter(c => c.ebay_status === 'sold');
+  const soldCount = sold.length;
+  const revenue = sold.reduce((s, c) => s + (Number(c.ebay_sold_price) || 0), 0);
+  const avg = soldCount ? revenue / soldCount : 0;
+
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  const recent = sold
+    .filter(c => c.ebay_sold_at && new Date(c.ebay_sold_at) >= thirtyDaysAgo)
+    .reduce((s, c) => s + (Number(c.ebay_sold_price) || 0), 0);
+
+  res.json({ listed, soldCount, revenue, avg, recent30: recent });
 });
 
 // Get single card
@@ -253,6 +291,45 @@ app.post('/api/series', async (req, res) => {
     .single();
   if (error) return res.status(500).json({ error: error.message });
   res.json(data);
+});
+
+app.delete('/api/series/:id', async (req, res) => {
+  const { error } = await supabase
+    .from('series')
+    .delete()
+    .eq('id', req.params.id);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ success: true });
+});
+
+// ─── Sets ─────────────────────────────────────────────────────────
+
+app.get('/api/sets', async (req, res) => {
+  const { data, error } = await supabase
+    .from('card_sets')
+    .select('*, series(name)')
+    .order('name');
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
+app.post('/api/sets', async (req, res) => {
+  const { data, error } = await supabase
+    .from('card_sets')
+    .insert(req.body)
+    .select()
+    .single();
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
+app.delete('/api/sets/:id', async (req, res) => {
+  const { error } = await supabase
+    .from('card_sets')
+    .delete()
+    .eq('id', req.params.id);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ success: true });
 });
 
 // ─── Labels ───────────────────────────────────────────────────────

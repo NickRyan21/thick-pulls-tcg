@@ -25,6 +25,11 @@ export default function App() {
     localStorage.setItem('tr_user', JSON.stringify(userData));
   };
 
+  const handleUpdateUser = (userData) => {
+    setUser(userData);
+    localStorage.setItem('tr_user', JSON.stringify(userData));
+  };
+
   const handleLogout = () => {
     setUser(null);
     localStorage.removeItem('tr_user');
@@ -42,12 +47,12 @@ export default function App() {
       <Sidebar onLogout={handleLogout} user={user} />
       <main className="main-content">
         <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/collection" element={<Collection />} />
+          <Route path="/" element={<Dashboard user={user} />} />
+          <Route path="/collection" element={<Collection user={user} />} />
           <Route path="/series" element={<Series />} />
           <Route path="/sets" element={<Sets />} />
           <Route path="/labels" element={<Labels />} />
-          <Route path="/settings" element={<Settings />} />
+          <Route path="/settings" element={<Settings user={user} onUpdateUser={handleUpdateUser} />} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </main>

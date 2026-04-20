@@ -2,11 +2,13 @@ import React, { useState, useEffect, useMemo } from 'react';
 import AddCardModal from '../components/AddCardModal';
 import { API_URL } from '../config';
 
+const listingPrice = (c) => Number(c.ebay_price ?? c.auction_start_price) || 0;
+
 const SORTS = {
   Newest: (a, b) => new Date(b.created_at) - new Date(a.created_at),
   Oldest: (a, b) => new Date(a.created_at) - new Date(b.created_at),
   'Name A-Z': (a, b) => (a.name || '').localeCompare(b.name || ''),
-  'Value High-Low': (a, b) => (Number(b.purchase_price) || 0) - (Number(a.purchase_price) || 0),
+  'Price High-Low': (a, b) => listingPrice(b) - listingPrice(a),
 };
 
 export default function Collection({ user }) {
@@ -45,7 +47,7 @@ export default function Collection({ user }) {
   }, [cards, search, sort]);
 
   const totalValue = useMemo(
-    () => cards.reduce((s, c) => s + (Number(c.purchase_price) || 0), 0),
+    () => cards.reduce((s, c) => s + listingPrice(c), 0),
     [cards]
   );
 
@@ -99,7 +101,7 @@ export default function Collection({ user }) {
           <div className="value">{cards.length}</div>
         </div>
         <div className="stat-card" style={{ textAlign: 'center' }}>
-          <label>Est. Value</label>
+          <label>Total Listing Value</label>
           <div className="value green">${totalValue.toFixed(2)}</div>
         </div>
       </div>
@@ -132,7 +134,7 @@ export default function Collection({ user }) {
                 <div style={{ fontSize: 11, color: '#58a6ff', marginTop: 4 }}>{card.rarity}</div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
                   <span style={{ fontSize: 12, color: '#3fb950' }}>
-                    {card.purchase_price ? `$${Number(card.purchase_price).toFixed(2)}` : ''}
+                    {listingPrice(card) ? `$${listingPrice(card).toFixed(2)}` : ''}
                   </span>
                   <button onClick={() => handleDelete(card.id)} style={styles.deleteBtn}>Delete</button>
                 </div>
@@ -163,7 +165,7 @@ export default function Collection({ user }) {
                   <td style={styles.td}>{card.rarity}</td>
                   <td style={styles.td}>{card.condition}</td>
                   <td style={{ ...styles.td, textAlign: 'right', color: '#3fb950' }}>
-                    {card.purchase_price ? `$${Number(card.purchase_price).toFixed(2)}` : '—'}
+                    {listingPrice(card) ? `$${listingPrice(card).toFixed(2)}` : '—'}
                   </td>
                   <td style={{ ...styles.td, textAlign: 'right' }}>
                     <button onClick={() => handleDelete(card.id)} style={styles.deleteBtn}>Delete</button>

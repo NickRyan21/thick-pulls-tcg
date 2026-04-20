@@ -46,6 +46,8 @@ export default function AddCardModal({ onClose, onSave, user }) {
   const [lookingUpPrice, setLookingUpPrice] = useState(false);
   const [priceMatches, setPriceMatches] = useState([]);
   const [priceError, setPriceError] = useState('');
+  const [researchPrice, setResearchPrice] = useState('');
+  const [applyConfirm, setApplyConfirm] = useState(false);
 
   const defaultBid = user?.ebay_default_starting_bid ?? 0.01;
 
@@ -206,8 +208,15 @@ export default function AddCardModal({ onClose, onSave, user }) {
   };
 
   const applySuggestedPrice = (price) => {
-    if (isAuction) update('auction_start_price', String(price));
-    else update('ebay_price', String(price));
+    setResearchPrice(String(price));
+  };
+
+  const applyToListing = () => {
+    if (!researchPrice) return;
+    if (isAuction) update('auction_start_price', researchPrice);
+    else update('ebay_price', researchPrice);
+    setApplyConfirm(true);
+    setTimeout(() => setApplyConfirm(false), 2000);
   };
 
   const handleSave = async () => {
@@ -542,11 +551,39 @@ export default function AddCardModal({ onClose, onSave, user }) {
 
           {priceError && <div style={{ fontSize: 12, color: '#8b949e', marginTop: 8 }}>{priceError}</div>}
 
+          {form.condition && form.name && (
+            <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid #21262d' }}>
+              <div style={{ fontSize: 12, color: '#8b949e', marginBottom: 6 }}>
+                <strong style={{ color: '#e6edf3' }}>Your Price</strong> — type a number (or click a reference chip below to pre-fill), then apply.
+              </div>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'stretch' }}>
+                <div style={{ display: 'flex', alignItems: 'center', padding: '0 10px', background: '#0d1117', border: '1px solid #30363d', borderRadius: 6, color: '#8b949e', fontSize: 14 }}>$</div>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={researchPrice}
+                  onChange={e => setResearchPrice(e.target.value)}
+                  placeholder="0.00"
+                  style={{ ...styles.input, flex: 1 }}
+                />
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={applyToListing}
+                  disabled={!researchPrice}
+                  style={{ padding: '8px 16px', whiteSpace: 'nowrap' }}
+                >
+                  {applyConfirm ? '✓ Applied' : `Apply to ${isAuction ? 'Starting Bid' : 'Buy It Now'}`}
+                </button>
+              </div>
+            </div>
+          )}
+
           {priceMatches.length > 0 && (
             <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid #21262d', display: 'flex', flexDirection: 'column', gap: 8 }}>
               <div style={{ fontSize: 12, color: '#8b949e' }}>
                 <strong style={{ color: '#e6edf3' }}>Reference prices (Near Mint baseline):</strong>
-                {' '}from TCGplayer + Cardmarket. Click a chip to apply it as your starting price, then adjust based on the eBay sold comps.
+                {' '}from TCGplayer + Cardmarket. Click a chip to copy it into "Your Price" above.
               </div>
               {priceMatches.map(m => (
                 <div key={m.id} style={styles.priceRow}>
